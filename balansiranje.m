@@ -25,7 +25,7 @@ J=100;
 
 p = J * (M+m) + M*m*l^2; % denominator ?
 
-% matriki A in B od lan
+% -------  matriki A in B od lan  --------------
 
 %%{
 A = [ 0         1               0       0;
@@ -39,7 +39,7 @@ B = [   0;
    (m*l)/p];
 %}
 
-% matrike z neta... ne upoštevajo trenja pa teh zadev
+% -------  matrike z neta... ne upoštevajo trenja pa teh zadev ------
 
 %{   
 A = [ 0 1           0           0;
@@ -59,7 +59,6 @@ B = [   0;
 
 C = [1 0 0 0];   
 %}
-
 
 korak = 0.01;
 cas = 10;
@@ -90,28 +89,41 @@ R = 0.01;
 
 % eno izmed teh
 
-K = place(A,B,p);
+%K = place(A,B,p);
 %K = lqr(A,B,Q,R);
-%K = [-1 -4 120 20];
+K = [-1 -4 120 20];
 
 % =========== RUNGE KUTTA ============================
 
 for k=2:length(tspan)
   
+  %TODO: sprement v runge kutta4
+   
   %katero matriko uporabit
-  %not good
   
   %kot=Y(3,k-1);
   %kot=mod(kot,2*pi);
-    
+  
   u = 0; %brez sile
   u = -K * Y(:,k-1);
-
+ 
+%================ matriki A & B ============ 
+  %%{
   k1 = A*Y(:,k-1) + B*u; 
   q1 = Y(:,k-1) + k1*korak/2;
   
   k2 = A*q1 + B*u;
   Y(:,k) = Y(:,k-1) + k2*korak;
+  
+  %}
+%================= iz pdfja ================
+  %{
+   %TODO
+
+
+
+  %}  
+  
    
   %{
   zdaj mamo runge kutta 3, ... 4 je bl natančna
@@ -120,22 +132,8 @@ for k=2:length(tspan)
   
 endfor
 
-% ============= ode45 ==========
-
+%========== runge kutta plot ===========
 %%{
-funkcija = @(t,x)  ([x(2);x(4);inv([M+m m*l*cos(x(3)); J+m*l^2 m*l*cos(x(3))])*[-b*x(2)+m*l*sin(x(3) * x(4)^2)+K*x; -m*g*l*sin( x(3) ) ] ]' * [1 0 0 0; 0 0 1 0; 0 1 0 0; 0 0 0 1])';
-[T,Y] = ode45(funkcija, [0,10], [1; 0; 0.5; 0]);
-
-plot(T, Y(:,1) ,'r;pozicijax;' );
-hold on
-plot(T, Y(:,2), 'g;hitrost;');
-hold on
-plot(T, Y(:,3), 'b;odklon utezi;');
-hold on
-plot(T, Y(:,4), 'k;kotna hitrost;');
-%}
- 
-%{
 plot(tspan, Y(1,:) ,'r;pozicijax;' )
 hold on
 plot(tspan, Y(2,:), 'g;hitrost;')
@@ -146,6 +144,26 @@ plot(tspan, Y(4,:), 'k;kotna hitrost;')
 %}
 
 
+% ============= ode45  & plot==========
+%{
+funkcija = @(t,x)  ([x(2);x(4);inv([M+m m*l*cos(x(3)); J+m*l^2 m*l*cos(x(3))])*[-b*x(2)+m*l*sin(x(3) * x(4)^2)+K*x; -m*g*l*sin( x(3) ) ] ]' * [1 0 0 0; 0 0 1 0; 0 1 0 0; 0 0 0 1])';
+[T,Y] = ode45(funkcija, [0,10], [1; 0; 0.5; 0]);
+
+%funkcijaMatrike = @(t,x) ( A * x + B * (K*x));
+%[T,Y] = ode45(funkcijaMatrike, [0,10], [1; 0; 0.5; 0]);
+
+plot(T, Y(:,1) ,'r;pozicijax;' );
+hold on
+plot(T, Y(:,2), 'g;hitrost;');
+hold on
+plot(T, Y(:,3), 'b;odklon utezi;');
+hold on
+plot(T, Y(:,4), 'k;kotna hitrost;');
+%}
+ 
+
+
+% ============= RUNGE KUTTA iz učilnce ========
 %{
 function [t, Y] = rk4(f, interval, Y0, h)
 %[t, Y] = rk4(f, [t0, tk], Y0, h) resi DE
