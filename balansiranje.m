@@ -90,8 +90,8 @@ R = 0.01;
 % eno izmed teh
 
 %K = place(A,B,p);
-%K = lqr(A,B,Q,R);
-K = [-1 -4 120 20];
+K = lqr(A,B,Q,R);
+%K = [-1 -4 120 200];
 
 % =========== RUNGE KUTTA ============================
 
@@ -133,7 +133,7 @@ for k=2:length(tspan)
 endfor
 
 %========== runge kutta plot ===========
-%%{
+%{
 plot(tspan, Y(1,:) ,'r;pozicijax;' )
 hold on
 plot(tspan, Y(2,:), 'g;hitrost;')
@@ -145,8 +145,8 @@ plot(tspan, Y(4,:), 'k;kotna hitrost;')
 
 
 % ============= ode45  & plot==========
-%{
-funkcija = @(t,x)  ([x(2);x(4);inv([M+m m*l*cos(x(3)); J+m*l^2 m*l*cos(x(3))])*[-b*x(2)+m*l*sin(x(3) * x(4)^2)+K*x; -m*g*l*sin( x(3) ) ] ]' * [1 0 0 0; 0 0 1 0; 0 1 0 0; 0 0 0 1])';
+%%{
+funkcija = @(t,x)  ([x(2);x(4);inv([M+m m*l*cos(x(3)); J+m*l^2 m*l*cos(x(3))])*[-b*x(2)+m*l*sin(x(3))*x(4)^2+K*x; -m*g*l*sin( x(3) ) ] ]' * [1 0 0 0; 0 0 1 0; 0 1 0 0; 0 0 0 1])';
 [T,Y] = ode45(funkcija, [0,10], [1; 0; 0.5; 0]);
 
 %funkcijaMatrike = @(t,x) ( A * x + B * (K*x));
