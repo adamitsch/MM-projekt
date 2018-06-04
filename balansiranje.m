@@ -7,9 +7,9 @@ function balansiranje(abc)
  g - težni pospešek
 %}
 
-%podatki=[1,5,1,9.8];
-%podatki=[5,100,1,9.8];
-podatki=[50,10,1,9.8];
+podatki=[1,5,1,9.8];
+%podatki=[20,100,1,9.8];
+%podatki=[50,10,1,9.8];
 
 m=podatki(1);
 M=podatki(2);
@@ -28,12 +28,14 @@ J = (1/3) * m * l * l
 
 
 %!!
+%{
 M=500;
 m=1;
 J=100;
 l=10;
 g=9.8;
 K=[-1 120 -4 200];
+%}
 
 p = J * (M+m) + M*m*l^2; % denominator ?
 
@@ -84,7 +86,7 @@ B = [   0;
 C = [1 0 0 0];   
 %}
 
-korak = 0.01;
+korak = 0.001;
 cas = 10;
 tspan = 0:korak:cas;  %čas
 korakov = cas/korak;
@@ -96,7 +98,9 @@ Y0 = [1;0;0.5;0];
 
 % x theta x' theta'  za testiranje po funkciji iz pdfja 
 Y0 = [1; 0.5 ; 0 ; 0];
+
 Y0 = [0 1 0 0];
+Y0 = [1 0 1 0];
 
 %Y0 = [1,0,pi/2,0];
 %Y0=abc
@@ -123,7 +127,7 @@ R = 0.01;
 %K = [ -1 -4 120 20];
 %K = [-15 -50 -2000 500];
 %K = place(A,B,p);
-%K = lqr(A,B,Q,R);
+K = lqr(A,B,Q,R);
 %K = [0 0 0 0];
 
 
@@ -140,6 +144,7 @@ f = @(t,x,u,A) A*x + B*u;
 % pr funkcijah obrnemo tud K
 
 %K = K * [1,0,0,0;0,0,1,0;0,1,0,0;0,0,0,1];
+
 %K = [ -4.0816   1127.4422    -16.4265    181.7687];
 %K = [0,0,0,0];
 
@@ -165,7 +170,8 @@ for k=2:length(tspan)
   %}
 %================= iz pdfja ================
    
-   %{
+   
+   %%{
    k1 = korak * f(tspan(k), Y(:,k-1), u ,A);
    k2 = korak * f(tspan(k) + korak/2, Y(:,k-1) + k1/2 , u,A);
    k3 = korak * f(tspan(k) + korak/2, Y(:,k-1) + k2/2, u,A);
@@ -174,14 +180,14 @@ for k=2:length(tspan)
    Y(:,k) = Y(:,k-1) + (1/6)*( k1 + 2*k2 + 2*k3 + k4);
    %}
    
-   %%{
+   %{
    
   
    k1 = korak * funkcija(tspan(k), Y(:,k-1), K);
    k2 = korak * funkcija(tspan(k) + korak/2, Y(:,k-1) + k1/2, K);
    k3 = korak * funkcija(tspan(k) + korak/2, Y(:,k-1) + k2/2, K);
    k4 = korak * funkcija(tspan(k) + korak, Y(:,k-1) + k3, K);
-  Y(:,k) = Y(:,k-1) + (1/6)*( k1 + 2*k2 + 2*k3 + k4);
+   Y(:,k) = Y(:,k-1) + (1/6)*( k1 + 2*k2 + 2*k3 + k4);
    %}
    
   
@@ -264,10 +270,15 @@ end
 
 %}
 
-for i=1:10:length(tspan)
+for i=1:100:length(tspan)
   vektor = Y(:,i);
+  
   x = vektor(1);
   th = vektor(2);
+  %ali
+  th =vektor(3); 
+ 
+  th=th+pi;
   
   W = 1*sqrt(M/5);  % cart width
   H = .5*sqrt(M/5); % cart height
