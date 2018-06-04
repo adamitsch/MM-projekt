@@ -7,9 +7,9 @@ function balansiranje(abc)
  g - težni pospešek
 %}
 
-podatki=[0.1,1,1,9.81];
+%podatki=[1,5,1,9.8];
 %podatki=[5,100,1,9.8];
-%podatki=[80,10,1,9.8];
+podatki=[50,10,1,9.8];
 
 m=podatki(1);
 M=podatki(2);
@@ -122,14 +122,16 @@ K = place(A,B,p);
 
 %funkcija = @(t,x)  ([x(2);x(4);inv([M+m m*l*cos(x(3)); J+m*l^2 m*l*cos(x(3))])*[-b*x(2)+m*l*sin(x(3))*x(4)^2+K*x; -m*g*l*sin( x(3) ) ] ]' * [1 0 0 0; 0 0 1 0; 0 1 0 0; 0 0 0 1])';
 
-funkcija = @(t,x) [x(2);  x(4);  inv([M+m m*l*cos(x(3)); J+m*l^2 m*l*cos(x(3))])  *  [-b*x(2)+m*l*sin(x(3))*x(4)^2+K*x;   -m*g*l*sin( x(3) ) ] ];
+funkcija = @(t,x,K) [x(2);  x(4);  inv([M+m m*l*cos(x(3)); J+m*l^2 m*l*cos(x(3))])  *  [-b*x(2)+m*l*sin(x(3))*x(4)^2+K*x;   -m*g*l*sin( x(3) ) ] ];
 
 f = @(t,x,u,A) A*x + B*u;
 
 
 % pr funkcijah obrnemo tud K
 
-K = K * [1,0,0,0;0,0,1,0;0,1,0,0;0,0,0,1]
+K = K * [1,0,0,0;0,0,1,0;0,1,0,0;0,0,0,1];
+K = [ -4.0816   1127.4422    -16.4265    181.7687];
+K = [0,0,0,0];
 
 for k=2:length(tspan)
 
@@ -165,10 +167,10 @@ for k=2:length(tspan)
    %%{
    
   
-   k1 = korak * funkcija(tspan(k), Y(:,k-1));
-   k2 = korak * funkcija(tspan(k) + korak/2, Y(:,k-1) + k1/2);
-   k3 = korak * funkcija(tspan(k) + korak/2, Y(:,k-1) + k2/2);
-   k4 = korak * funkcija(tspan(k) + korak, Y(:,k-1) + k3);
+   k1 = korak * funkcija(tspan(k), Y(:,k-1), K);
+   k2 = korak * funkcija(tspan(k) + korak/2, Y(:,k-1) + k1/2, K);
+   k3 = korak * funkcija(tspan(k) + korak/2, Y(:,k-1) + k2/2, K);
+   k4 = korak * funkcija(tspan(k) + korak, Y(:,k-1) + k3, K);
   Y(:,k) = Y(:,k-1) + (1/6)*( k1 + 2*k2 + 2*k3 + k4);
    %}
    
@@ -191,7 +193,7 @@ plot(tspan, Y(4,:), 'k;kotna hitrost;')
 %}
 
 % ta je za funkcijo
-%{
+%%{
 plot(tspan, Y(1,:) ,'r;pozicijax;' )
 hold on
 plot(tspan, Y(2,:), 'b;odklon;')
