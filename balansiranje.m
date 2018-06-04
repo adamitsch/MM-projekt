@@ -26,6 +26,15 @@ J = (1/3) * m * l * l
 
 % J = 1/3 * m * l^2
 
+
+%!!
+M=500;
+m=1;
+J=100;
+l=10;
+g=9.8;
+K=[-1 120 -4 200];
+
 p = J * (M+m) + M*m*l^2; % denominator ?
 
 % -------  matriki A in B --------------
@@ -76,7 +85,7 @@ C = [1 0 0 0];
 %}
 
 korak = 0.01;
-cas = 5;
+cas = 10;
 tspan = 0:korak:cas;  %čas
 korakov = cas/korak;
 
@@ -86,7 +95,8 @@ Y0 = [5;0;2;0];
 Y0 = [1;0;0.5;0];
 
 % x theta x' theta'  za testiranje po funkciji iz pdfja 
-Y0 = [1; 0 ; 0.5 ; 0];
+Y0 = [1; 0.5 ; 0 ; 0];
+Y0 = [0 1 0 0];
 
 %Y0 = [1,0,pi/2,0];
 %Y0=abc
@@ -96,8 +106,8 @@ Y(:,1)=Y0;
 
 % ======= vektor K  ======================
 % u(t) = -K * x(t) = - (K1x1 + K2x2 + K3x3 + K4x4)
-K = [ -10 -20 -30 -40];
-K = [ -1 -5 100 200];
+%K = [ -10 -20 -30 -40];
+%K = [ -1 -5 100 200];
 
 % iz lastnih vrednosti - rečeš kakšne lastne vrednosti hočeš -> funkcija place
 p = [-1; -1; -1; -1];
@@ -112,7 +122,7 @@ R = 0.01;
 %K = [ -1 -5 100 200];
 %K = [ -1 -4 120 20];
 %K = [-15 -50 -2000 500];
-K = place(A,B,p);
+%K = place(A,B,p);
 %K = lqr(A,B,Q,R);
 %K = [0 0 0 0];
 
@@ -129,9 +139,9 @@ f = @(t,x,u,A) A*x + B*u;
 
 % pr funkcijah obrnemo tud K
 
-K = K * [1,0,0,0;0,0,1,0;0,1,0,0;0,0,0,1];
-K = [ -4.0816   1127.4422    -16.4265    181.7687];
-K = [0,0,0,0];
+%K = K * [1,0,0,0;0,0,1,0;0,1,0,0;0,0,0,1];
+%K = [ -4.0816   1127.4422    -16.4265    181.7687];
+%K = [0,0,0,0];
 
 for k=2:length(tspan)
 
@@ -253,5 +263,58 @@ for k = 2:length(t)
 end
 
 %}
+
+for i=1:10:length(tspan)
+  vektor = Y(:,i);
+  x = vektor(1);
+  th = vektor(2);
+  
+  W = 1*sqrt(M/5);  % cart width
+  H = .5*sqrt(M/5); % cart height
+  wr = .2; % wheel radius
+  mr = .3*sqrt(m); % mass radius
+
+  W=2;
+  H=1;
+  wr=0.2;
+  mr=0.5;
+  
+  % positions
+  % y = wr/2; % cart vertical position
+  y = wr/2+H/2; % cart vertical position
+  w1x = x-.9*W/2;
+  w1y = 0;
+  w2x = x+.9*W/2-wr;
+  w2y = 0;
+
+  px = x + l*sin(th);
+  py = y - l*cos(th);
+
+  plot([-10 10],[0 0],'w','LineWidth',2)
+  hold on
+  rectangle('Position',[x-W/2,y-H/2,W,H],'Curvature',.1,'FaceColor',[1 0.1 0.1],'EdgeColor',[1 1 1])
+  rectangle('Position',[w1x,w1y,wr,wr],'Curvature',1,'FaceColor',[1 1 1],'EdgeColor',[1 1 1])
+  rectangle('Position',[w2x,w2y,wr,wr],'Curvature',1,'FaceColor',[1 1 1],'EdgeColor',[1 1 1])
+
+  plot([x px],[y py],'w','LineWidth',2)
+
+  rectangle('Position',[px-mr/2,py-mr/2,mr,mr],'Curvature',1,'FaceColor',[.3 0.3 1],'EdgeColor',[1 1 1])
+
+  % set(gca,'YTick',[])
+  % set(gca,'XTick',[])
+  xlim([-5 5]);
+  ylim([-2 2.5]);
+  set(gca,'Color','k','XColor','w','YColor','w')
+  set(gcf,'Position',[10 900 800 400])
+  set(gcf,'Color','k')
+  set(gcf,'InvertHardcopy','off')   
+
+  % box off
+  drawnow
+  hold off
+  
+endfor
+
+
 
 endfunction
