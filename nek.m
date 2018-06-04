@@ -5,32 +5,27 @@ function balansiranje(abc)
  M - masa vozička
  l - dolžina palice
  g - težni pospešek
+
 %}
 
 %podatki=[0.1,1,1,9.81];
-%podatki=[5,100,1,9.8];
-podatki=[80,10,1,9.8];
+podatki=[1,500,1,9.8];
 
 m=podatki(1);
 M=podatki(2);
 l=podatki(3);
 g=podatki(4);
 
-% J, b -- J je vztrajnostni moment, b trenje
+% J, b -- J je vztrajnostni moment, b pa neka zaviralna zadeva
 % J =  ** kg m^2 / s^2
 % b =  ** Ns / m
+
 b=0.1;
 J=100;
 
-%J = (1/3) * m * l * l
-
-% J = 1/3 * m * l^2
-
 p = J * (M+m) + M*m*l^2; % denominator ?
 
-% -------  matriki A in B --------------
-
-% x theta x' thet'a ----> x x' theta theta'
+% matriki A in B od lan
 
 %%{
 A = [ 0         1               0       0;
@@ -38,23 +33,13 @@ A = [ 0         1               0       0;
       0         0               0       1;
       0    (-m*l*b)/p   (m*g*l*(M+m))/p 0];
 
-A_prava=A;
-A_leva = A;
-A_leva(4,2)=-1*A_leva(4,2);
-A_leva(4,3)=-1*A_leva(4,3);
-
-
-
 B = [   0;
    (J+m*l^2)/p;
         0;
    (m*l)/p];
-   
-  lastneA= eig(A)
-  
 %}
 
-% -------------
+% matrike z neta... ne upoštevajo trenja pa teh zadev
 
 %{   
 A = [ 0 1           0           0;
@@ -75,8 +60,9 @@ B = [   0;
 C = [1 0 0 0];   
 %}
 
+
 korak = 0.01;
-cas = 3;
+cas = 10;
 tspan = 0:korak:cas;  %čas
 korakov = cas/korak;
 
@@ -84,7 +70,6 @@ korakov = cas/korak;
 Y0 = [2;0.5;0.1;0.01];
 Y0 = [5;0;2;0];
 Y0 = [1;0;0.5;0];
-%Y0 = [1,0,pi/2,0];
 %Y0=abc
 
 Y = zeros(length(Y0), length(tspan));
@@ -93,7 +78,7 @@ Y(:,1)=Y0;
 % ======= vektor K  ======================
 % u(t) = -K * x(t) = - (K1x1 + K2x2 + K3x3 + K4x4)
 K = [ -10 -20 -30 -40];
-K = [ -1 -5 100 200];
+K = [ -1 -4 120 200];
 
 % iz lastnih vrednosti - rečeš kakšne lastne vrednosti hočeš -> funkcija place
 p = [-1; -1; -1; -1];
@@ -103,107 +88,43 @@ p = [-1; -1; -1; -1];
 Q=[1 0 0 0; 0 1 0 0; 0 0 10 0; 0 0 0 100];
 R = 0.01;
 
-%kontroliranje
+% eno izmed teh
 
-K = [ -1 -5 100 200];
-%K = [ -1 -4 120 20];
-%K = [-15 -50 -2000 500];
-%K = place(A,B,p)
+K = place(A,B,p);
 %K = lqr(A,B,Q,R);
-%K = [0 0 0 0];
-
-
+%K = [-1 -4 120 20];
 
 % =========== RUNGE KUTTA ============================
 
-
-%funkcija = @(t,x)  ([x(2);x(4);inv([M+m m*l*cos(x(3)); J+m*l^2 m*l*cos(x(3))])*[-b*x(2)+m*l*sin(x(3))*x(4)^2+K*x; -m*g*l*sin( x(3) ) ] ]' * [1 0 0 0; 0 0 1 0; 0 1 0 0; 0 0 0 1])';
-
-funkcija = @(t,x)  ([x(2);x(4);inv([M+m m*l*cos(x(3)); J+m*l^2 m*l*cos(x(3))])*[-b*x(2)+m*l*sin(x(3))*x(4)^2+K*x; -m*g*l*sin( x(3) ) ] ] );
-
-f = @(t,x,u,A) A*x + B*u;
-
 for k=2:length(tspan)
   
-  %TODO: sprement v runge kutta4
-   
   %katero matriko uporabit
+  %not good
   
   %kot=Y(3,k-1);
   %kot=mod(kot,2*pi);
-  
-  %u = 0; 
+    
+  u = 0; %brez sile
   u = -K * Y(:,k-1);
 
-%================ matriki A & B - RK3 ============ 
-  %{
   k1 = A*Y(:,k-1) + B*u; 
   q1 = Y(:,k-1) + k1*korak/2;
   
   k2 = A*q1 + B*u;
   Y(:,k) = Y(:,k-1) + k2*korak;
-  
-  %rk http://lpsa.swarthmore.edu/NumInt/NumIntSecond.html  
-  
+   
+  %{
+  zdaj mamo runge kutta 3, ... 4 je bl natančna
+   --> runge kutta iz http://lpsa.swarthmore.edu/NumInt/NumIntSecond.html  
   %}
-%================= iz pdfja ================
-   
-   %{
-   k1 = korak * f(tspan(k), Y(:,k-1), u ,A);
-   k2 = korak * f(tspan(k) + korak/2, Y(:,k-1) + k1/2 , u,A);
-   k3 = korak * f(tspan(k) + korak/2, Y(:,k-1) + k2/2, u,A);
-   k4 = korak * f(tspan(k) + korak, Y(:,k-1) + k3 ,u ,A);
-   %}
-   
-   %%{
-
-   k1 = korak * funkcija(tspan(k), Y(:,k-1));
-   k2 = korak * funkcija(tspan(k) + korak/2, Y(:,k-1) + k1/2);
-   k3 = korak * funkcija(tspan(k) + korak/2, Y(:,k-1) + k2/2);
-   k4 = korak * funkcija(tspan(k) + korak, Y(:,k-1) + k3);
-  
-   %}
-   
-  
-   Y(:,k) = Y(:,k-1) + (1/6)*( k1 + 2*k2 + 2*k3 + k4);
-  
-   
-  
   
 endfor
 
-%========== runge kutta plot ===========
-% za @f tazgornji, za @funkcija taspodnji plot
-
-%{
-plot(tspan, Y(1,:) ,'r;pozicijax;' )
-hold on
-plot(tspan, Y(2,:), 'g;hitrost;')
-hold on
-plot(tspan, Y(3,:), 'b;odklon utezi;')
-hold on
-plot(tspan, Y(4,:), 'k;kotna hitrost;')
-%}
+% ============= ode45 ==========
 
 %%{
-plot(tspan, Y(1,:) ,'r;pozicijax;' )
-hold on
-plot(tspan, Y(2,:), 'b;odklon;')
-hold on
-plot(tspan, Y(3,:), 'g;hitrost;')
-hold on
-plot(tspan, Y(4,:), 'k;kotna hitrost;')
-%}
-
-% ============= ode45  & plot==========
-
-%{
-funkcija = @(t,x)  ([x(2);x(4);inv([M+m m*l*cos(x(3)); J+m*l^2 m*l*cos(x(3))])*[-b*x(2)+m*l*sin(x(3))*x(4)^2+K*x; -m*g*l*sin( x(3) ) ] ]' * [1 0 0 0; 0 0 1 0; 0 1 0 0; 0 0 0 1])';
-
+funkcija = @(t,x)  ([x(2);x(4);inv([M+m m*l*cos(x(3)); J+m*l^2 m*l*cos(x(3))])*[-b*x(2)+m*l*sin(x(3) * x(4)^2)+K*x; -m*g*l*sin( x(3) ) ] ]' * [1 0 0 0; 0 0 1 0; 0 1 0 0; 0 0 0 1])';
 [T,Y] = ode45(funkcija, [0,10], [1; 0; 0.5; 0]);
-
-%funkcijaMatrike = @(t,x) ( A * x + B * (K*x));
-%[T,Y] = ode45(funkcijaMatrike, [0,10], [1; 0; 0.5; 0]);
 
 plot(T, Y(:,1) ,'r;pozicijax;' );
 hold on
@@ -214,9 +135,17 @@ hold on
 plot(T, Y(:,4), 'k;kotna hitrost;');
 %}
  
+%{
+plot(tspan, Y(1,:) ,'r;pozicijax;' )
+hold on
+plot(tspan, Y(2,:), 'g;hitrost;')
+hold on
+plot(tspan, Y(3,:), 'b;odklon utezi;')
+hold on
+plot(tspan, Y(4,:), 'k;kotna hitrost;')
+%}
 
 
-% ============= RUNGE KUTTA iz učilnce ========
 %{
 function [t, Y] = rk4(f, interval, Y0, h)
 %[t, Y] = rk4(f, [t0, tk], Y0, h) resi DE
