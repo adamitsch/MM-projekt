@@ -84,6 +84,10 @@ korakov = cas/korak;
 Y0 = [2;0.5;0.1;0.01];
 Y0 = [5;0;2;0];
 Y0 = [1;0;0.5;0];
+
+% x theta x' theta'  za testiranje po funkciji iz pdfja 
+Y0 = [1; 0.5 ; 0 ; 0];
+
 %Y0 = [1,0,pi/2,0];
 %Y0=abc
 
@@ -105,12 +109,12 @@ R = 0.01;
 
 %kontroliranje
 
-K = [ -1 -5 100 200];
+%K = [ -1 -5 100 200];
 %K = [ -1 -4 120 20];
 %K = [-15 -50 -2000 500];
 %K = place(A,B,p)
 %K = lqr(A,B,Q,R);
-%K = [0 0 0 0];
+K = [0 0 0 0];
 
 
 
@@ -119,9 +123,10 @@ K = [ -1 -5 100 200];
 
 %funkcija = @(t,x)  ([x(2);x(4);inv([M+m m*l*cos(x(3)); J+m*l^2 m*l*cos(x(3))])*[-b*x(2)+m*l*sin(x(3))*x(4)^2+K*x; -m*g*l*sin( x(3) ) ] ]' * [1 0 0 0; 0 0 1 0; 0 1 0 0; 0 0 0 1])';
 
-funkcija = @(t,x)  ([x(2);x(4);inv([M+m m*l*cos(x(3)); J+m*l^2 m*l*cos(x(3))])*[-b*x(2)+m*l*sin(x(3))*x(4)^2+K*x; -m*g*l*sin( x(3) ) ] ] );
+funkcija = @(t,x) [x(2);  x(4);  inv([M+m m*l*cos(x(3)); J+m*l^2 m*l*cos(x(3))])  *  [-b*x(2)+m*l*sin(x(3))*x(4)^2+K*x;   -m*g*l*sin( x(3) ) ] ];
 
 f = @(t,x,u,A) A*x + B*u;
+
 
 for k=2:length(tspan)
   
@@ -166,9 +171,6 @@ for k=2:length(tspan)
    
   
    Y(:,k) = Y(:,k-1) + (1/6)*( k1 + 2*k2 + 2*k3 + k4);
-  
-   
-  
   
 endfor
 
