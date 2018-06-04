@@ -7,9 +7,9 @@ function balansiranje(abc)
  g - težni pospešek
 %}
 
-%podatki=[0.1,1,1,9.81];
+podatki=[0.1,1,1,9.81];
 %podatki=[5,100,1,9.8];
-podatki=[80,10,1,9.8];
+%podatki=[80,10,1,9.8];
 
 m=podatki(1);
 M=podatki(2);
@@ -20,9 +20,9 @@ g=podatki(4);
 % J =  ** kg m^2 / s^2
 % b =  ** Ns / m
 b=0.1;
-J=100;
 
-%J = (1/3) * m * l * l
+J=100;
+J = (1/3) * m * l * l
 
 % J = 1/3 * m * l^2
 
@@ -76,7 +76,7 @@ C = [1 0 0 0];
 %}
 
 korak = 0.01;
-cas = 3;
+cas = 5;
 tspan = 0:korak:cas;  %čas
 korakov = cas/korak;
 
@@ -86,7 +86,7 @@ Y0 = [5;0;2;0];
 Y0 = [1;0;0.5;0];
 
 % x theta x' theta'  za testiranje po funkciji iz pdfja 
-Y0 = [1; 0.5 ; 0 ; 0];
+Y0 = [1; 0 ; 0.5 ; 0];
 
 %Y0 = [1,0,pi/2,0];
 %Y0=abc
@@ -112,10 +112,9 @@ R = 0.01;
 %K = [ -1 -5 100 200];
 %K = [ -1 -4 120 20];
 %K = [-15 -50 -2000 500];
-%K = place(A,B,p)
+K = place(A,B,p);
 %K = lqr(A,B,Q,R);
-K = [0 0 0 0];
-
+%K = [0 0 0 0];
 
 
 % =========== RUNGE KUTTA ============================
@@ -128,12 +127,13 @@ funkcija = @(t,x) [x(2);  x(4);  inv([M+m m*l*cos(x(3)); J+m*l^2 m*l*cos(x(3))])
 f = @(t,x,u,A) A*x + B*u;
 
 
+% pr funkcijah obrnemo tud K
+
+K = K * [1,0,0,0;0,0,1,0;0,1,0,0;0,0,0,1]
+
 for k=2:length(tspan)
-  
-  %TODO: sprement v runge kutta4
-   
+
   %katero matriko uporabit
-  
   %kot=Y(3,k-1);
   %kot=mod(kot,2*pi);
   
@@ -158,19 +158,22 @@ for k=2:length(tspan)
    k2 = korak * f(tspan(k) + korak/2, Y(:,k-1) + k1/2 , u,A);
    k3 = korak * f(tspan(k) + korak/2, Y(:,k-1) + k2/2, u,A);
    k4 = korak * f(tspan(k) + korak, Y(:,k-1) + k3 ,u ,A);
+   
+   Y(:,k) = Y(:,k-1) + (1/6)*( k1 + 2*k2 + 2*k3 + k4);
    %}
    
    %%{
-
+   
+  
    k1 = korak * funkcija(tspan(k), Y(:,k-1));
    k2 = korak * funkcija(tspan(k) + korak/2, Y(:,k-1) + k1/2);
    k3 = korak * funkcija(tspan(k) + korak/2, Y(:,k-1) + k2/2);
    k4 = korak * funkcija(tspan(k) + korak, Y(:,k-1) + k3);
-  
+  Y(:,k) = Y(:,k-1) + (1/6)*( k1 + 2*k2 + 2*k3 + k4);
    %}
    
   
-   Y(:,k) = Y(:,k-1) + (1/6)*( k1 + 2*k2 + 2*k3 + k4);
+   
   
 endfor
 
@@ -187,7 +190,8 @@ hold on
 plot(tspan, Y(4,:), 'k;kotna hitrost;')
 %}
 
-%%{
+% ta je za funkcijo
+%{
 plot(tspan, Y(1,:) ,'r;pozicijax;' )
 hold on
 plot(tspan, Y(2,:), 'b;odklon;')
@@ -200,9 +204,12 @@ plot(tspan, Y(4,:), 'k;kotna hitrost;')
 % ============= ode45  & plot==========
 
 %{
+K = [0,0,0,0];
+
+
 funkcija = @(t,x)  ([x(2);x(4);inv([M+m m*l*cos(x(3)); J+m*l^2 m*l*cos(x(3))])*[-b*x(2)+m*l*sin(x(3))*x(4)^2+K*x; -m*g*l*sin( x(3) ) ] ]' * [1 0 0 0; 0 0 1 0; 0 1 0 0; 0 0 0 1])';
 
-[T,Y] = ode45(funkcija, [0,10], [1; 0; 0.5; 0]);
+[T,Y] = ode45(funkcija, [0,5], [1; 0; 0.5; 0]);
 
 %funkcijaMatrike = @(t,x) ( A * x + B * (K*x));
 %[T,Y] = ode45(funkcijaMatrike, [0,10], [1; 0; 0.5; 0]);
