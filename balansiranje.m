@@ -1,4 +1,7 @@
 function balansiranje(abc)
+ pkg load control;
+ 
+ 
 %{ 
  KOMENTAR
  m - masa uteži
@@ -7,7 +10,7 @@ function balansiranje(abc)
  g - težni pospešek
 %}
 
-podatki=[1,5,1,9.8];
+podatki=[10,5,1,9.8];
 %podatki=[20,100,1,9.8];
 %podatki=[50,10,1,9.8];
 
@@ -67,11 +70,11 @@ B = [   0;
 
 % -------------
 
-%{   
+%%{   
 A = [ 0 1           0           0;
       0 0       (-g*m)/M        0;
       0 0           0           1;
-      0 0 (g*(l+M/m))/(l*(M/m)) 0]
+      0 0 (g*(l+M/m))/(l*(M/m)) 0];
 
 % *neka fora spodaj/zgoraj!      
 %Adruga = A;
@@ -81,12 +84,12 @@ A = [ 0 1           0           0;
 B = [   0;
       1/M;
         0;
-   1/(M*l)]
+   1/(M*l)];
 
 C = [1 0 0 0];   
 %}
 
-korak = 0.001;
+korak = 0.01;
 cas = 10;
 tspan = 0:korak:cas;  %čas
 korakov = cas/korak;
@@ -99,8 +102,10 @@ Y0 = [1;0;0.5;0];
 % x theta x' theta'  za testiranje po funkciji iz pdfja 
 Y0 = [1; 0.5 ; 0 ; 0];
 
-Y0 = [0 1 0 0];
-Y0 = [1 0 1 0];
+%Y0 = [0 1 0 0];
+Y0 = [0; 0; 0.6; 0];
+Y0 = [0; 0; 2; 0];
+%Y0 = [1 0 1 0];
 
 %Y0 = [1,0,pi/2,0];
 %Y0=abc
@@ -114,7 +119,8 @@ Y(:,1)=Y0;
 %K = [ -1 -5 100 200];
 
 % iz lastnih vrednosti - rečeš kakšne lastne vrednosti hočeš -> funkcija place
-p = [-1; -1; -1; -1];
+p = [-1.2; -1.2; -1.2; -1.2];
+%p = [-0.5; -0.5; -0.5; -0.5];
 %mal bl agresivno
 %p = [-2,-2,-2,-2];
 
@@ -126,8 +132,8 @@ R = 0.01;
 %K = [ -1 -5 100 200];
 %K = [ -1 -4 120 20];
 %K = [-15 -50 -2000 500];
-%K = place(A,B,p);
-K = lqr(A,B,Q,R);
+K = place(A,B,p);
+%K = lqr(A,B,Q,R);
 %K = [0 0 0 0];
 
 
@@ -138,15 +144,21 @@ K = lqr(A,B,Q,R);
 
 funkcija = @(t,x,K) [x(2);  x(4);  inv([M+m m*l*cos(x(3)); J+m*l^2 m*l*cos(x(3))])  *  [-b*x(2)+m*l*sin(x(3))*x(4)^2+K*x;   -m*g*l*sin( x(3) ) ] ];
 
+funkcijaa = @(t,x,u) [x(2); (u+m*l*(sin(x(3))*x(4)^2 ) - m*g*cos(x(3))*sin(x(3)) )/(M+m-m*cos(x(3))^2) ;x(4); (u*cos(x(3))-(M+m)*g*sin(x(3)) + m*l*(cos(x(3))*sin(x(3)) )*x(4)*x(4) )/(m*l*cos(x(3))^2 - (M+m)*l ) ];
+
+
+
 f = @(t,x,u,A) A*x + B*u;
 
 
 % pr funkcijah obrnemo tud K
 
-%K = K * [1,0,0,0;0,0,1,0;0,1,0,0;0,0,0,1];
+
 
 %K = [ -4.0816   1127.4422    -16.4265    181.7687];
-%K = [0,0,0,0];
+K = [0,0,0,0];
+
+
 
 for k=2:length(tspan)
 
@@ -171,7 +183,7 @@ for k=2:length(tspan)
 %================= iz pdfja ================
    
    
-   %%{
+   %{
    k1 = korak * f(tspan(k), Y(:,k-1), u ,A);
    k2 = korak * f(tspan(k) + korak/2, Y(:,k-1) + k1/2 , u,A);
    k3 = korak * f(tspan(k) + korak/2, Y(:,k-1) + k2/2, u,A);
@@ -181,15 +193,24 @@ for k=2:length(tspan)
    %}
    
    %{
+   K = K * [1,0,0,0;0,0,1,0;0,1,0,0;0,0,0,1];
+   u = -K * Y(:,k-1);
    
-  
    k1 = korak * funkcija(tspan(k), Y(:,k-1), K);
    k2 = korak * funkcija(tspan(k) + korak/2, Y(:,k-1) + k1/2, K);
    k3 = korak * funkcija(tspan(k) + korak/2, Y(:,k-1) + k2/2, K);
    k4 = korak * funkcija(tspan(k) + korak, Y(:,k-1) + k3, K);
    Y(:,k) = Y(:,k-1) + (1/6)*( k1 + 2*k2 + 2*k3 + k4);
+   
    %}
    
+   %{
+   k1 = korak * funkcijaa(tspan(k), Y(:,k-1), u);
+   k2 = korak * funkcijaa(tspan(k) + korak/2, Y(:,k-1) + k1/2, u);
+   k3 = korak * funkcijaa(tspan(k) + korak/2, Y(:,k-1) + k2/2, u);
+   k4 = korak * funkcijaa(tspan(k) + korak, Y(:,k-1) + k3, u);
+   Y(:,k) = Y(:,k-1) + (1/6)*( k1 + 2*k2 + 2*k3 + k4);
+   %}
   
    
   
@@ -209,7 +230,7 @@ plot(tspan, Y(4,:), 'k;kotna hitrost;')
 %}
 
 % ta je za funkcijo
-%%{
+%{
 plot(tspan, Y(1,:) ,'r;pozicijax;' )
 hold on
 plot(tspan, Y(2,:), 'b;odklon;')
@@ -221,22 +242,25 @@ plot(tspan, Y(4,:), 'k;kotna hitrost;')
 
 % ============= ode45  & plot==========
 
-%{
+%%{
 K = [0,0,0,0];
-
+K = place(A,B,p);
 
 funkcija = @(t,x)  ([x(2);x(4);inv([M+m m*l*cos(x(3)); J+m*l^2 m*l*cos(x(3))])*[-b*x(2)+m*l*sin(x(3))*x(4)^2+K*x; -m*g*l*sin( x(3) ) ] ]' * [1 0 0 0; 0 0 1 0; 0 1 0 0; 0 0 0 1])';
-
-[T,Y] = ode45(funkcija, [0,5], [1; 0; 0.5; 0]);
+t0 = 0:.01:10;
+[T,Y] = ode45(funkcija, [tspan], [0; 0; pi; 0]);
+numel(T);
+numel(Y);
+%y0 = interp1(T,Y,t0);
 
 %funkcijaMatrike = @(t,x) ( A * x + B * (K*x));
 %[T,Y] = ode45(funkcijaMatrike, [0,10], [1; 0; 0.5; 0]);
 
 plot(T, Y(:,1) ,'r;pozicijax;' );
 hold on
-plot(T, Y(:,2), 'g;hitrost;');
+plot(T, Y(:,2), 'b;odklon utezi;');
 hold on
-plot(T, Y(:,3), 'b;odklon utezi;');
+plot(T, Y(:,3), 'g;hitrost;');
 hold on
 plot(T, Y(:,4), 'k;kotna hitrost;');
 %}
@@ -270,25 +294,36 @@ end
 
 %}
 
-for i=1:100:length(tspan)
+
+Y(:,1)
+Y(:,2)
+%%{
+for i=1:5:length(Y)
+  %
   vektor = Y(:,i);
+  vektor = Y(i,:);
+  
   
   x = vektor(1);
+  th = vektor(3);
   th = vektor(2);
+  th = th+pi;
+  
   %ali
-  th =vektor(3); 
- 
-  th=th+pi;
+  %th =vektor(3); 
+  
+  %th=mod(-th+pi, 2*pi);
+
   
   W = 1*sqrt(M/5);  % cart width
   H = .5*sqrt(M/5); % cart height
-  wr = .2; % wheel radius
-  mr = .3*sqrt(m); % mass radius
+  wr = .5; % wheel radius
+  mr = .5*sqrt(m); % mass radius
 
   W=2;
   H=1;
-  wr=0.2;
-  mr=0.5;
+  wr=0.5;
+  mr=0.7;
   
   % positions
   % y = wr/2; % cart vertical position
@@ -298,6 +333,8 @@ for i=1:100:length(tspan)
   w2x = x+.9*W/2-wr;
   w2y = 0;
 
+  l=1.5;
+  
   px = x + l*sin(th);
   py = y - l*cos(th);
 
@@ -313,8 +350,8 @@ for i=1:100:length(tspan)
 
   % set(gca,'YTick',[])
   % set(gca,'XTick',[])
-  xlim([-5 5]);
-  ylim([-2 2.5]);
+  xlim([-10 10]);
+  ylim([-4 5]);
   set(gca,'Color','k','XColor','w','YColor','w')
   set(gcf,'Position',[10 900 800 400])
   set(gcf,'Color','k')
@@ -324,7 +361,15 @@ for i=1:100:length(tspan)
   drawnow
   hold off
   
+  if i==1
+    pause(1)
+  endif
+  
+  
+
 endfor
+
+%}
 
 
 
