@@ -1,21 +1,13 @@
 function abc()
 pkg load control;
   
-podatki=[10,4,2,-9.8];
+podatki=[10,20,1.5,9.8];
 m=podatki(1);
 M=podatki(2);
 l=podatki(3);
 g=podatki(4);
 
-A = [ 0 1           0           0;
-      0 0       (-g*m)/M        0;
-      0 0           0           1;
-      0 0 (g*(l+M/m))/(l*(M/m)) 0];
-      
-B = [   0;
-      1/M;
-        0;
-   1/(M*l)];
+g=g*-1;
    
 korak = 0.01;
 cas = 10;
@@ -23,22 +15,17 @@ tspan = 0:korak:cas;
 korakov = cas/korak;
 
 %ZAČETNO STANJE
-Y0 = [0; 0; pi/3; 0];
-
+Y0 = [0; 0; 1.4; 0];
 Y = zeros(length(Y0), length(tspan));
 Y(:,1)=Y0;
+K=[0 0 0 0];
 
-funkcijaa = @(t,x,u) [x(2); (u+m*l*(sin(x(3))*x(4)^2 ) - m*g*cos(x(3))*sin(x(3)) )/(M+m-m*cos(x(3))^2) ;x(4); (u*cos(x(3))-(M+m)*g*sin(x(3)) + m*l*(cos(x(3))*sin(x(3)) )*x(4)*x(4) )/(m*l*cos(x(3))^2 - (M+m)*l ) ];
-
-K = [0,0,0,0];
-
-p = [-2.2; -2.2; -2.2; -2.2];
-%K = place(A,B,p);
-
+funkcijaa = @(t,x,u) [ x(2); (u+m*l*(sin(x(3))*x(4)^2 ) - m*g*cos(x(3))*sin(x(3)) )/(M+m-m*cos(x(3))^2) ;x(4); (u*cos(x(3))-(M+m)*g*sin(x(3)) + m*l*(cos(x(3))*sin(x(3)) )*x(4)*x(4) )/(m*l*cos(x(3))^2 - (M+m)*l ) ];
 
 for k=2:length(tspan)
-  
-   u = -K * Y(:,k-1);
+   
+   %u = -K * Y(:,k-1);
+   u = 0;
   
    k1 = korak * funkcijaa(tspan(k), Y(:,k-1), u);
    k2 = korak * funkcijaa(tspan(k) + korak/2, Y(:,k-1) + k1/2, u);
@@ -47,7 +34,8 @@ for k=2:length(tspan)
    Y(:,k) = Y(:,k-1) + (1/6)*( k1 + 2*k2 + 2*k3 + k4);
    
 endfor
-%{
+
+%%{
   plot(tspan, Y(1,:) ,'r;pozicijax;' )
   hold on
   plot(tspan, Y(2,:), 'g;hitrost;')
@@ -55,12 +43,10 @@ endfor
   plot(tspan, Y(3,:), 'b;odklon utezi;')
   hold on
   plot(tspan, Y(4,:), 'k;kotna hitrost;')
-  
-  %pause(100);
 %}
   
 %%{  
-for i=1:8:length(Y)
+for i=1:10:length(Y)
   %
   vektor = Y(:,i);
   x = vektor(1);
@@ -125,5 +111,3 @@ endfor
 %}
 
 endfunction
-
-
